@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webhook Server</h1>
+    <button onclick="triggerTask('/webhook/prepare_replenishment?use_cache_stock_levels=false&use_cache_sales=false')">Prepare Replenishment (Full Reload)</button>
+    <button onclick="triggerTask('/webhook/prepare_replenishment?use_cache_stock_levels=true&use_cache_sales=true')">Prepare Replenishment (Use Cache)</button>
+    <button onclick="triggerTask('/webhook/populate_production')">Populate Production</button>
+    <button onclick="triggerTask('/webhook/sync_shiphero')">Sync ShipHero</button>
+    <div id="status"></div>
+
+    <script>
+        function triggerTask(url) {
+            fetch(url, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('status').innerText = data.status;
+                })
+                .catch(error => {
+                    document.getElementById('status').innerText = 'Error: ' + error;
+                });
+        }
+    </script>
+</body>
+</html>

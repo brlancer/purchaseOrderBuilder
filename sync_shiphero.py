@@ -234,10 +234,10 @@ def sync_purchase_order_data_from_shiphero():
             print(f"No matching Airtable PO found for ShipHero PO ID: {shiphero_po_id}")
 
 def sync_shiphero():
-    print("Syncing purchase orders with ShipHero...")
+    print("Syncing new purchase orders from Airtable to ShipHero...")
     purchase_orders = fetch_purchase_orders_to_sync()
     push_enqueued_pos_to_shiphero(purchase_orders)
-    print("Finished syncing purchase orders with ShipHero.")
-    print("Syncing purchase order data from ShipHero to Airtable...")
-    sync_purchase_order_data_from_shiphero()
-    print("Finished syncing purchase order data from ShipHero to Airtable.")
+    print("Finished syncing new purchase orders from Airtable to ShipHero.")
+    # print("Syncing purchase order data from ShipHero to Airtable...")
+    # sync_purchase_order_data_from_shiphero()
+    # print("Finished syncing purchase order data from ShipHero to Airtable.")

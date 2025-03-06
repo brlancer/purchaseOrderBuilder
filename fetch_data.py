@@ -6,20 +6,33 @@ from pyairtable import Table
 from datetime import datetime, timedelta
 from utils import fetch_shiphero_paginated_data, fetch_shopify_bulk_operation
 
+
 # Airtable functions
 
 def fetch_airtable_incoming_stock():
-    print("Initializing Airtable table...")
+    """
+    Fetches incoming stock data from Airtable and processes it into a pandas DataFrame.
+    This function retrieves records from the "Line Items" table in Airtable where the 
+    "PO Status" is either 'Open' or 'Draft'. It extracts relevant fields from these records, 
+    calculates the incoming stock by subtracting the received quantity from the ordered quantity, 
+    and groups the data by SKU to sum the incoming stock for each SKU.
+    Returns:
+      pandas.DataFrame: A DataFrame containing the SKU and the summed incoming stock for each SKU.
+    """
+
+    print("Fetching incoming stock data from Airtable...")
+    
+    # print("Initializing Airtable table...")
     line_items_table = Table(AIRTABLE_API_KEY, AIRTABLE_PRODUCTION_DEV_BASE_ID, "Line Items")
 
-    print("Fetching records with PO Status = 'Open'...")
+    # print("Fetching records with PO Status = 'Open'...")
     records = line_items_table.all(formula="OR({PO Status} = 'Open', {PO Status} = 'Draft')", fields=['Position - PO # - SKU', 'sku', 'Quantity Ordered', 'Quantity Received (ShipHero)'])
-    print(f"Fetched {len(records)} records.")
-    print("First 5 records:")
-    for record in records[:5]:
-        print(record)
+    # print(f"Fetched {len(records)} records.")
+    # print("First 5 records:")
+    # for record in records[:5]:
+    #     print(record)
 
-    print("Extracting relevant fields...")
+    # print("Extracting relevant fields...")
     data = []
     for record in records:
         fields = record['fields']
@@ -29,29 +42,37 @@ def fetch_airtable_incoming_stock():
             'ordered': fields.get('Quantity Ordered', 0),
             'received': fields.get('Quantity Received (ShipHero)', 0)
         })
-    print(f"Extracted data for {len(data)} records.")
+    # print(f"Extracted data for {len(data)} records.")
 
-    print("Converting data to DataFrame...")
+    # print("Converting data to DataFrame...")
     df = pd.DataFrame(data)
-    print("DataFrame created:")
-    print(df.head())
+    # print("DataFrame created:")
+    # print(df.head())
 
-    print("Ensuring 'sku' column contains only strings and cleaning 'sku' values...")
+    # print("Ensuring 'sku' column contains only strings and cleaning 'sku' values...")
     df['sku'] = df['sku'].apply(lambda x: str(x[0]) if isinstance(x, list) and len(x) > 0 else str(x) if not isinstance(x, str) else x)
 
-    print("Calculating 'pending' field...")
+    # print("Calculating 'pending' field...")
     df['incoming'] = df['ordered'] - df['received']
-    print("Calculated 'pending' field:")
-    print(df.head())
+    # print("Calculated 'pending' field:")
+    # print(df.head())
 
-    print("Grouping by 'sku' and summing 'incoming'...")
+    # print("Grouping by 'sku' and summing 'incoming'...")
     grouped_df = df.groupby('sku')['incoming'].sum().reset_index()
-    print("Grouped DataFrame:")
-    print(grouped_df.head())
+    # print("Grouped DataFrame:")
+    # print(grouped_df.head())
 
     return grouped_df
 
 def fetch_airtable_product_metadata():
+    """
+    Fetches product metadata from Airtable and processes it into a pandas DataFrame.
+    This function retrieves records from the "Variants" table in Airtable and extracts
+    relevant fields from these records. It then converts the data into a DataFrame.
+    Returns:
+      pandas.DataFrame: A DataFrame containing the relevant product metadata fields.
+    """
+
     headers = {
         'Authorization': f'Bearer {AIRTABLE_API_KEY}'
     }
@@ -65,6 +86,7 @@ def fetch_airtable_product_metadata():
             'Position',
             'Supplier Name - ShipHero', 
             'Status Shopify (Shopify)',
+            'Stocked Status',
             'Decoration Group (Plain Text)',
             'Artwork (Title)',
             'Cost-Production: Total', 
@@ -99,9 +121,18 @@ def fetch_airtable_product_metadata():
 
     return all_records
 
+
 # Shiphero functions
 
 def fetch_shiphero_stock_levels(use_cache=False):
+    """
+    Fetches stock levels data from ShipHero and processes it into a list of dictionaries.
+    This function retrieves stock levels data from the ShipHero GraphQL API and paginates
+    through the results to fetch all available data. It then processes the data into a list
+    of dictionaries, where each dictionary represents a product and contains relevant fields.
+    Returns:
+      list: A list of dictionaries containing the stock levels data for each product.
+    """
     
     CACHE_FILE = 'cache/shiphero_stock_levels.pkl'
 
@@ -149,9 +180,24 @@ def fetch_shiphero_stock_levels(use_cache=False):
     with open(CACHE_FILE, 'wb') as f:
       pickle.dump(stock_levels, f)
 
+    # Debug statement: print the first 5 records where backorder > 0
+    print("Backordered Products:")
+    backordered_products = [product for product in stock_levels if product["node"]["backorder"] > 0]
+    for product in backordered_products[:5]:
+        print(product)
+        
     return stock_levels
 
 def fetch_shiphero_incoming_stock():  # Not currently functional
+    """
+    Fetches incoming stock data from ShipHero and processes it into a list of dictionaries.
+    This function retrieves incoming stock data from the ShipHero GraphQL API and paginates
+    through the results to fetch all available data. It then processes the data into a list
+    of dictionaries, where each dictionary represents a product and contains relevant fields.
+    Returns:
+      list: A list of dictionaries containing the incoming stock data for each product.
+    """
+
     query = """
     query ($first: Int!, $after: String) {
       purchase_orders(warehouse_id: "V2FyZWhvdXNlOjEwMTU4Mw==", fulfillment_status: "Pending") { 
@@ -209,9 +255,19 @@ def fetch_shiphero_incoming_stock():  # Not currently functional
     else:
         return None
 
+
 # Shopify functions
 
 def fetch_shopify_sales_data(use_cache=False):
+    """
+    Fetches sales data from Shopify and processes it into a list of dictionaries.
+    This function retrieves sales data from the Shopify GraphQL API and paginates
+    through the results to fetch all available data. It then processes the data into
+    a list of dictionaries, where each dictionary represents an order or a line item
+    within an order and contains relevant fields.
+    Returns:
+      list: A list of dictionaries containing the sales data for each order and line item.
+    """
     
     CACHE_FILE = 'cache/shopify_sales_data.pkl'
 
@@ -263,3 +319,72 @@ def fetch_shopify_sales_data(use_cache=False):
       pickle.dump(sales_data, f)
 
     return sales_data
+
+def fetch_shopify_inventory_data(use_cache=False):
+    """
+    Fetches inventory data from Shopify and processes it into a pandas DataFrame.
+    This function retrieves inventory data from the Shopify GraphQL API and processes
+    it into a pandas DataFrame. It fetches data for products and their variants, including
+    inventory levels at different locations. It then processes the data into a DataFrame
+    with columns for product ID, product title, variant ID, variant title, SKU, location ID,
+    location name, and inventory quantities (available, incoming, committed, on hand).
+    Returns:
+      pandas.DataFrame: A DataFrame containing the inventory data for products and variants.
+    """
+    
+    CACHE_FILE = 'cache/shopify_inventory_data.pkl'
+
+    if use_cache and os.path.exists(CACHE_FILE):
+        print("Loading cached inventory data...")
+        with open(CACHE_FILE, 'rb') as f:
+          return pickle.load(f)
+        
+    print("Fetching fresh inventory data from Shopify...")
+
+    query = """
+    query GetCommittedInventory {
+      products(first:50, query: "status:ACTIVE") {
+        edges {
+          node {
+            id
+            title
+            variants(first:50) {
+              edges {
+                node {
+                  id
+                  title
+                  sku
+                  inventoryItem {
+                    id
+                    inventoryLevels(first: 10) {
+                      edges {
+                        node {
+                          location {
+                            id
+                            name
+                          }
+                          quantities(names: ["available","incoming","committed","on_hand"]) {
+                            name
+                            quantity
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+    
+    inventory_data = fetch_shopify_bulk_operation(query)
+
+    # Save the fetched data to cache
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+    with open(CACHE_FILE, 'wb') as f:
+      pickle.dump(inventory_data, f)
+
+    return inventory_data

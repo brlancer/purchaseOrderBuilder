@@ -20,6 +20,23 @@ def export_df(df, label):
     df.to_csv(output_path, index=False)
     print(f"{label} saved to {output_path}")
 
+def export_json(data, label):
+    timestamp = datetime.now().strftime("%Y-%d-%m %H-%M-%S")
+    output_dir = "output"
+    output_path = os.path.join(output_dir, f"{label}_{timestamp}.json")
+    
+    # Check if the directory exists and create it if not
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    print(f"{label}:")
+    print(data)
+    
+    with open(output_path, 'w') as file:
+        json.dump(data, file, indent=4)
+    
+    print(f"{label} saved to {output_path}")
+
 # Shiphero API utility functions
 
 def refresh_shiphero_token():
@@ -103,7 +120,7 @@ def fetch_shiphero_paginated_data(query, variables, data_key):
 
     while has_next_page:
         variables["after"] = after_cursor
-        print(f"Sending request with variables: {variables}")
+        # print(f"Sending request with variables: {variables}")
         result = fetch_shiphero_with_throttling(query, variables)
         
         if result:

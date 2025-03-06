@@ -8,23 +8,10 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
     stock_levels_df.rename(columns={
         'SKU': 'sku',
         'On Hand': 'on_hand',
-        'Allocated': 'allocated',
+        'committed': 'committed',
         'Available': 'available',
         'Backorder': 'backorder',
-        'Incoming Stock': 'incoming_stock'
-    }, inplace=True)
-
-    sales_df.rename(columns={
-        'sku': 'sku',
-        '9 weeks ago': 'sales_9_weeks_ago',
-        '8 weeks ago': 'sales_8_weeks_ago',
-        '7 weeks ago': 'sales_7_weeks_ago',
-        '6 weeks ago': 'sales_6_weeks_ago',
-        '5 weeks ago': 'sales_5_weeks_ago',
-        '4 weeks ago': 'sales_4_weeks_ago',
-        '3 weeks ago': 'sales_3_weeks_ago',
-        '2 weeks ago': 'sales_2_weeks_ago',
-        '1 weeks ago': 'sales_1_week_ago'
+        'Incoming Stock': 'incoming'
     }, inplace=True)
 
     product_metadata_df.rename(columns={
@@ -39,6 +26,7 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
         'Product Type (Internal)': 'product_type_internal',
         'Supplier Name - ShipHero': 'supplier_name_shiphero',
         'Status Shopify (Shopify)': 'status_shopify',
+        'Stocked Status': 'stocked_status',
         'Decoration Group (Plain Text)': 'decoration_group',
         'Artwork (Title)': 'artwork_title'
     }, inplace=True)
@@ -62,11 +50,22 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
     replenishment_df.sort_values(by=['decoration_group', 'product_type_internal', 'product_num', 'position'], inplace=True)
 
     # Reorder columns: product_metadata columns, sales_df columns, stock_levels_df columns
-    product_metadata_columns = ['sku', 'option1_value', 'cost_production_total', 'product_name', 'category', 'subcategory', 'product_num', 'product_type_internal', 'supplier_name_shiphero', 'status_shopify', 'decoration_group', 'artwork_title']
-    sales_columns = ['sales_9_weeks_ago', 'sales_8_weeks_ago', 'sales_7_weeks_ago', 'sales_6_weeks_ago', 'sales_5_weeks_ago', 'sales_4_weeks_ago', 'sales_3_weeks_ago', 'sales_2_weeks_ago', 'sales_1_week_ago']
-    stock_levels_columns = ['on_hand', 'allocated', 'available', 'backorder', 'incoming_stock']
-    other_columns = [col for col in replenishment_df.columns if col not in product_metadata_columns + sales_columns + stock_levels_columns]
-    ordered_columns = product_metadata_columns + sales_columns + stock_levels_columns + other_columns
+    product_metadata_columns = ['sku', 'option1_value', 'cost_production_total', 'product_name', 'category', 'subcategory', 'product_num', 'product_type_internal', 'supplier_name_shiphero', 'status_shopify', 'stocked_status', 'decoration_group', 'artwork_title']
+    # Extract sales columns with the pattern 'sales_X_weeks_ago_YYYYMMDD'
+    sales_columns = [col for col in sales_df.columns if re.match(r'sales_\d+_weeks_ago_\w+\d{2}', col)]
+    print("Sales Columns:", sales_columns)  # Debugging statement
+    # Sort sales columns by the week number
+    sales_columns_sorted = sorted(sales_columns, key=lambda x: int(re.search(r'sales_(\d+)_weeks_ago', x).group(1)), reverse=True)
+    print("Sorted Sales Columns:", sales_columns_sorted)  # Debugging statement
+    
+    stock_levels_columns = ['on_hand', 'committed', 'available', 'backorder', 'incoming']
+    other_columns = [col for col in replenishment_df.columns if col not in product_metadata_columns + sales_columns_sorted + stock_levels_columns]
+    ordered_columns = product_metadata_columns + sales_columns_sorted + stock_levels_columns + other_columns
+    
+    # Print ordered columns
+    print("Ordered Columns:")
+    print(ordered_columns)
+    
     replenishment_df = replenishment_df[ordered_columns]
 
     # Remove position field

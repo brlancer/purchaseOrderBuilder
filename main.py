@@ -1,41 +1,31 @@
-import sys
+from flask import Flask, request, jsonify, render_template
+from sync_shiphero import sync_shiphero
 from prepare_replenishment import prepare_replenishment
 from populate_production import populate_production
-from sync_shiphero import sync_shiphero
+import threading
 
-# Command line instructions
+app = Flask(__name__)
 
-    # Preparing replenishment worksheet
-    # Get fresh data with % python main.py prepare_replenishment
-    # Use cached data with % python main.py prepare_replenishment --use-cache_stock_levels --use-cache_sales
+@app.route('/webhook/prepare_replenishment', methods=['GET', 'POST'])
+def webhook_prepare_replenishment():
+    use_cache_stock_levels = request.args.get('use_cache_stock_levels', 'false').lower() == 'true'
+    use_cache_sales = request.args.get('use_cache_sales', 'false').lower() == 'true'
+    threading.Thread(target=prepare_replenishment, args=(use_cache_stock_levels, use_cache_sales)).start()
+    return jsonify({"status": "Task prepare_replenishment started"}), 200
 
-    # Pushing draft purchase orders from replenishment worksheet to Production Airtable base
-    # python main.py populate_production
+@app.route('/webhook/populate_production', methods=['GET', 'POST'])
+def webhook_populate_production():
+    threading.Thread(target=populate_production).start()
+    return jsonify({"status": "Task populate_production started"}), 200
 
-    # Sync purchase order data with ShipHero
-    # work in progress
+@app.route('/webhook/sync_shiphero', methods=['GET', 'POST'])
+def webhook_sync_shiphero():
+    threading.Thread(target=sync_shiphero).start()
+    return jsonify({"status": "Task sync_shiphero started"}), 200
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <task>")
-        print("Tasks: prepare_replenishment, populate_production")
-        sys.exit(1)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-    task = sys.argv[1]
-    use_cache_stock_levels = '--use-cache-stock-levels' in sys.argv
-    use_cache_sales = '--use-cache-sales' in sys.argv
-
-    if task == "prepare_replenishment":
-        prepare_replenishment(use_cache_stock_levels, use_cache_sales)
-    elif task == "populate_production":
-        populate_production()
-    elif task == "sync_shiphero":
-        sync_shiphero()
-    
-    else:
-        print(f"Unknown task: {task}")
-        print("Tasks: prepare_replenishment, populate_production")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001)
