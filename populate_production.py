@@ -39,7 +39,8 @@ def populate_production():
     worksheet = sh.worksheet("Replenishment")
 
     # Fetch the replenishment quantities from the Google Sheet
-    replenishment_data = worksheet.get_all_records()
+    expected_headers = ["product_num", "sku", "To Order Qty", "Total Units to Order for this Product"]
+    replenishment_data = worksheet.get_all_records(expected_headers=expected_headers)
     replenishment_df = pd.DataFrame(replenishment_data)
 
     # Remove all rows with 0 or blank in 'Total Units to Order for this Product' column

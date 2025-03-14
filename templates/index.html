@@ -26,6 +26,7 @@
     <button onclick="triggerTask('/webhook/prepare_replenishment?use_cache_stock_levels=false&use_cache_sales=false')">Prepare Replenishment (Full Reload)</button>
     <button onclick="triggerTask('/webhook/prepare_replenishment?use_cache_stock_levels=true&use_cache_sales=true')">Prepare Replenishment (Use Cache)</button>
     <button onclick="triggerTask('/webhook/populate_production')">Populate Production</button>
+    <button onclick="triggerTask('/webhook/packing_slips')">Generate Packing Slips</button>
     <button onclick="triggerTask('/webhook/push_pos_to_shiphero')">Push POs to ShipHero</button>
     <form action="/webhook/sync_shiphero_purchase_orders_to_airtable" method="post">
         <button type="submit">Sync ShipHero Purchase Orders to Airtable</button>

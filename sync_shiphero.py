@@ -3,13 +3,13 @@ from pyairtable import Table
 import config
 import json
 from fetch_data import fetch_purchase_orders_from_shiphero
-from config import SHIPHERO_WAREHOUSE_ID
+import config
 
 def prepare_graphql_query_to_create_purchase_orders(po_record):
     """Prepare the GraphQL query for the purchase_order_create mutation."""
     po_number = po_record['fields']['PO #']
     vendor_id = po_record['fields']['ShipHero Vendor ID'][0]
-    warehouse_id = SHIPHERO_WAREHOUSE_ID
+    warehouse_id = config.SHIPHERO_WAREHOUSE_ID
 
     line_items_data = [
         {

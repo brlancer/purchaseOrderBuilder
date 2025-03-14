@@ -4,6 +4,7 @@ from prepare_replenishment import prepare_replenishment
 from populate_production import populate_production
 from sync_shiphero import push_pos_to_shiphero
 from sync_shiphero import sync_shiphero_purchase_orders_to_airtable
+from packing_slips import packing_slips
 
 app = Flask(__name__)
 
@@ -23,6 +24,11 @@ def webhook_populate_production():
 def webhook_push_pos_to_shiphero():
     threading.Thread(target=push_pos_to_shiphero).start()
     return jsonify({"status": "Task push_pos_to_shiphero started"}), 200
+
+@app.route('/webhook/packing_slips', methods=['GET', 'POST'])
+def webhook_packing_slips():
+    threading.Thread(target=packing_slips).start()
+    return jsonify({"status": "Task packing_slips started"}), 200
 
 @app.route('/webhook/sync_shiphero_purchase_orders_to_airtable', methods=['GET', 'POST'])
 def webhook_sync_shiphero_purchase_orders_to_airtable():
