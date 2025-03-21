@@ -22,13 +22,19 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
         'Product Name': 'product_name',
         'Category': 'category',
         'Subcategory': 'subcategory',
-        'product_num': 'product_num',
+        'Product Number': 'product_num',
         'Product Type (Internal)': 'product_type_internal',
-        'Supplier Name - ShipHero': 'supplier_name_shiphero',
+        'Supplier (Plain Text)': 'supplier',
         'Status Shopify (Shopify)': 'status_shopify',
         'Stocked Status': 'stocked_status',
         'Decoration Group (Plain Text)': 'decoration_group',
-        'Artwork (Title)': 'artwork_title'
+        'Artwork (Title)': 'artwork_title',
+        'Component Brand': 'component_brand',
+        'Component Style Number': 'component_style_number',
+        'Component Style Name': 'component_style_name',
+        'Component Color': 'component_color',
+        'Blank Preferred Supplier': 'blank_preferred_supplier',
+        'Blank Backup Supplier(s)': 'blank_backup_suppliers'
     }, inplace=True)
 
     # Inner merge stock_levels_df and product_metadata_df on SKU
@@ -39,7 +45,7 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
 
     # Fill missing values in specific columns with empty strings
     columns_to_fill = ['option1_value', 'product_name', 'category', 'subcategory', 
-                       'supplier_name_shiphero', 'status_shopify', 'decoration_group', 'artwork_title']
+                       'supplier', 'status_shopify', 'decoration_group', 'artwork_title']
     replenishment_df[columns_to_fill] = replenishment_df[columns_to_fill].fillna('')
 
     # Convert columns to strings to avoid unhashable type errors
@@ -50,7 +56,7 @@ def prepare_merged_replenishment_df(stock_levels_df, sales_df, product_metadata_
     replenishment_df.sort_values(by=['decoration_group', 'product_type_internal', 'product_num', 'position'], inplace=True)
 
     # Reorder columns: product_metadata columns, sales_df columns, stock_levels_df columns
-    product_metadata_columns = ['sku', 'option1_value', 'cost_production_total', 'product_name', 'category', 'subcategory', 'product_num', 'product_type_internal', 'supplier_name_shiphero', 'status_shopify', 'stocked_status', 'decoration_group', 'artwork_title']
+    product_metadata_columns = ['sku', 'option1_value', 'cost_production_total', 'product_name', 'category', 'subcategory', 'product_num', 'product_type_internal', 'supplier', 'status_shopify', 'stocked_status', 'decoration_group', 'artwork_title']
     # Extract sales columns with the pattern 'sales_X_weeks_ago_YYYYMMDD'
     sales_columns = [col for col in sales_df.columns if re.match(r'sales_\d+_weeks_ago_\w+\d{2}', col)]
     print("Sales Columns:", sales_columns)  # Debugging statement

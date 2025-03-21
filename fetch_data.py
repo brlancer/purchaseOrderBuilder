@@ -80,11 +80,11 @@ def fetch_airtable_product_metadata():
         'view': 'Data for PO Builder',
         'fields[]': [
             'SKU', 
-            'product_num',
+            'Product Number',
             'Product Name', 
             'Option1 Value', 
             'Position',
-            'Supplier Name - ShipHero', 
+            'Supplier (Plain Text)', 
             'Status Shopify (Shopify)',
             'Stocked Status',
             'Decoration Group (Plain Text)',
@@ -92,7 +92,13 @@ def fetch_airtable_product_metadata():
             'Cost-Production: Total', 
             'Category', 
             'Subcategory', 
-            'Product Type (Internal)'
+            'Product Type (Internal)',
+            'Component Brand',
+            'Component Style Number',
+            'Component Style Name',
+            'Component Color',
+            'Blank Preferred Supplier',
+            'Blank Backup Supplier(s)'
         ]
     }
     

@@ -1,6 +1,6 @@
-# PO Builder 3.0
+# Culk Analytics
 
-A Flask-based web application for preparing replenishment reports and managing purchase orders.
+A Flask-based web application for preparing replenishment reports, sales analytics, and managing purchase orders.
 
 ## Overview
 
